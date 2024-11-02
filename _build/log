@@ -1,0 +1,6 @@
+# dune init project nonograms
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /home/yutingli1123/.cache/dune/db
+# Workspace root: /home/yutingli1123/git/nonograms
+# Auto-detected concurrency: 16
