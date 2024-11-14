@@ -44,20 +44,20 @@ let initialize_puzzle : int -> int -> puzzle = fun rows cols ->
 let rec validate_row : row_hint -> cell list -> bool = fun hint row ->
   let hint_size = List.length hint in
   match row with
-  | [] -> if hint_size > 0 then false else true
+  | [] -> if hint_size > 0 then false else true (*if row is through but still hints left, false, else its a good solution*)
   | x :: xs -> begin
     if hint_size = 0 then
-      if x = Filled then false else validate_row hint xs
+      if x = Filled then false else validate_row hint xs (*if no more hints, but still some row, then all rest must be Empty or Unknown. If not return false*)
     else
-      let this_hint = get_first_elem_of_list hint in
+      let this_hint = get_first_elem_of_list hint in 
       if x = Filled then 
-        validate_row (get_rest_of_list hint) (remove_from_list row this_hint)
+        validate_row (get_rest_of_list hint) (remove_from_list row this_hint) (*if current row index is Filled, apply the hint and recurse with rest of hint and row*)
       else
-        validate_row hint xs
+        validate_row hint xs (*if current row index is Empty or Unknown, keep hints intact and recurse with rest of row*)
   end
 
 (* Function to validate whether a column configuration satisfies its hint *)
-let rec validate_column : column_hint -> cell list -> bool = fun hint column ->
+let rec validate_column : column_hint -> cell list -> bool = fun hint column -> (* same logic as validate_row *)
   let hint_size = List.length hint in
   match column with
   | [] -> if hint_size > 0 then false else true
@@ -102,15 +102,50 @@ let rec generate_column_configurations : column_hint -> int -> int list -> cell 
       generate_column_configurations xs (length - x) (acc @ (List.init x (fun _ -> Filled))) (*configuration with putting Filled and going to further hints*)
       ]
 
+let is_filled_same : cell list -> cell list -> bool = fun ref cmp ->
+  List.for_all2 (fun x y -> if x = Filled then (x=y) else true) ref cmp
+
+let is_empty_same : cell list -> cell list -> bool = fun ref cmp ->
+  List.for_all2 (fun x y -> if x = Empty then (x=y) else true) ref cmp
+
+let is_same : cell list -> cell list -> bool = fun ref cmp ->
+  (is_filled_same ref cmp) && (is_empty_same ref cmp)
+
+let consensus_at_position configs pos =
+  let values = List.map (fun config -> List.nth config pos) configs in (* get the values at pos of each config*)
+  match List.fold_left (fun acc v -> if acc = Some v then acc else None) (Some (List.hd values)) (List.tl values) with (* if all values are same, return that value, else return Unknown*)
+  | Some value -> value
+  | None -> Unknown
+
 (* Function to update the puzzle grid based on row constraints *)
 let update_row_with_guaranteed_cells : row_hint -> cell list -> cell list = fun hint row ->
-  (* Implement the update logic *)
-  row
+  let configs = generate_row_configurations hint (List.length row) [] in
+  (*keep only the configs that actually have the same Filled and Empty slots as row*)
+  let valid_configs = List.filter (fun config -> is_same row config) configs in
+  if List.length valid_configs = 0 then
+    raise Error "No valid configurations found (update_row_with_guaranteed_cells)"
+  else
+    List.mapi (fun i cell -> (* for each cell in the configs, if it was Unknown originally, update if possible
+                                else, keep it as it was*)
+      match cell with
+      | Unknown -> consensus_at_position valid_configs i
+      | _ -> cell
+    ) row
 
 (* Function to update the puzzle grid based on column constraints *)
 let update_column_with_guaranteed_cells : column_hint -> cell list -> cell list = fun hint column ->
-  (* Implement the update logic *)
-  column
+  let configs = generate_column_configurations hint (List.length column) [] in
+  (*keep only the configs that actually have the same Filled and Empty slots as column*)
+  let valid_configs = List.filter (fun config -> is_same column config) configs in
+  if List.length valid_configs = 0 then
+    raise Error "No valid configurations found (update_column_with_guaranteed_cells)"
+  else
+    List.mapi (fun i cell -> (* for each cell in the configs, if it was Unknown originally, update if possible
+                                else, keep it as it was*)
+      match cell with
+      | Unknown -> consensus_at_position valid_configs i
+      | _ -> cell
+    ) column
 
 (* Function to apply row and column updates to the puzzle grid *)
 let update_puzzle : puzzle -> row_hint list -> column_hint list -> puzzle = fun puzzle row_hints col_hints ->
