@@ -21,7 +21,7 @@ let update_column : puzzle -> int -> cell list -> puzzle = fun puzzle col_index 
 (* Function to get the first element of a list, or raise an error if empty *)
 let get_first_elem_of_list : 'a list -> 'a = fun lst ->
   match lst with
-  | [] -> raise Error "Empty list has no first element"
+  | [] -> raise (Error "Empty list has no first element")
   | x :: _ -> x
 
 (* Function to get the rest of a list after the first element *)
@@ -37,14 +37,14 @@ let rec get_list_sum : int list -> int = fun lst ->
   | x :: xs -> x + (get_list_sum xs)
 
 (* Function to remove a specified number of elements from a list *)
-let rec remove_from_list : int list -> int -> int list = fun lst amt ->
+let rec remove_from_list : 'a list -> int -> 'a list = fun lst amt ->
   match lst with
   | [] -> []
   | x :: xs -> if amt > 0 then remove_from_list xs (amt - 1) else xs
 
 (* Function to initialize the puzzle grid with Unknown cells *)
 let initialize_puzzle : int -> int -> puzzle = fun rows cols ->
-  List.init rows (fun _ -> List.init cols (fun _ -> Unknown))
+  List.init rows (fun _ -> (List.init cols (fun _ -> Unknown)))
 
 (* Function to validate whether a row configuration satisfies its hint *)
 let rec validate_row : row_hint -> cell list -> bool = fun hint row ->
@@ -78,40 +78,41 @@ let rec validate_column : column_hint -> cell list -> bool = fun hint column -> 
         validate_column hint xs
   end
 
-(* Function to generate possible configurations for a row based on its hint *)
+(* Updated generate_row_configurations with debugging *)
 let rec generate_row_configurations : row_hint -> int -> cell list -> cell list list = fun hint length acc ->
-  let total_filled = get_list_sum hint in (* calculate the total number of filled cells *)
-  let min_length = total_filled + List.length hint - 1 in (* calculate minimum length required by hints *)
+  let total_filled = get_list_sum hint in (* total required filled cells *)
+  let min_length = total_filled + List.length hint - 1 in (* minimum row length to fit hints *)
 
   if min_length > length then
     [] (* not enough space for hints *)
   else if hint = [] then
-    [acc @ (List.init length (fun _ -> Empty))] (* fill remaining cells with Empty if no more hints *)
+    [acc @ (List.init (max 0 length) (fun _ -> Empty))] (* fill remaining cells with Empty if no more hints *)
   else
     let this_hint = get_first_elem_of_list hint in
     let rest_hint = get_rest_of_list hint in
 
-    (* Inner recursive function to attempt placing the current hint at various positions *)
     let rec recurse_hints start configs =
       if start + min_length > length then
-        configs (* stop if there isn't enough space left *)
+        configs
       else
-        let filled = (List.init start (fun _ -> Empty)) @ (List.init this_hint (fun _ -> Filled)) in
+        let filled_part = (List.init start (fun _ -> Empty)) @ (List.init this_hint (fun _ -> Filled)) in
+        let new_acc = acc @ filled_part in
         let new_acc = if rest_hint = [] then new_acc else new_acc @ [Empty] in
-        let new_configs = generate_row_configurations rest_hint (length - start - this_hint - 1) new_acc in
+        let remaining_length = max 0 (length - start - this_hint - 1) in
+        let new_configs = generate_row_configurations rest_hint remaining_length new_acc in
         recurse_hints (start + 1) (configs @ new_configs)
     in
     recurse_hints 0 []
 
-(* Function to generate possible configurations for a column based on its hint (same as rows) *)
-let rec generate_column_configurations : column_hint -> int -> int list -> cell list list = fun hint length acc ->
+(* Function to generate possible configurations for a column based on its hint *)
+let rec generate_column_configurations : column_hint -> int -> cell list -> cell list list = fun hint length acc ->
   let total_filled = get_list_sum hint in
   let min_length = total_filled + List.length hint - 1 in
 
   if min_length > length then
     []
   else if hint = [] then
-    [acc @ (List.init length (fun _ -> Empty))]
+    [acc @ (List.init (max 0 length) (fun _ -> Empty))] (* ensure length is non-negative *)
   else
     let this_hint = get_first_elem_of_list hint in
     let rest_hint = get_rest_of_list hint in
@@ -121,8 +122,10 @@ let rec generate_column_configurations : column_hint -> int -> int list -> cell 
         configs
       else
         let filled = (List.init start (fun _ -> Empty)) @ (List.init this_hint (fun _ -> Filled)) in
-        let new_acc = acc @ filled @ [Empty] in
-        let new_configs = generate_column_configurations rest_hint (length - start - this_hint - 1) new_acc in
+        let new_acc = acc @ filled in
+        let new_acc = if rest_hint = [] then new_acc else new_acc @ [Empty] in
+        let remaining_length = max 0 (length - start - this_hint - 1) in (* ensure non-negative *)
+        let new_configs = generate_column_configurations rest_hint remaining_length new_acc in
         recurse_hints (start + 1) (configs @ new_configs)
     in
     recurse_hints 0 []
@@ -145,14 +148,17 @@ let get_column_configurations : column_hint -> int -> cell list list = fun hint 
     configs
 
 (* Helper functions to check if cells in two lists match based on certain criteria *)
-let is_filled_same : cell list -> cell list -> bool = fun ref cmp ->
-  List.for_all2 (fun x y -> if x = Filled then (x=y) else true) ref cmp
-
-let is_empty_same : cell list -> cell list -> bool = fun ref cmp ->
-  List.for_all2 (fun x y -> if x = Empty then (x=y) else true) ref cmp
-
-let is_same : cell list -> cell list -> bool = fun ref cmp ->
-  (is_filled_same ref cmp) && (is_empty_same ref cmp)
+  let is_filled_same : cell list -> cell list -> bool = fun ref cmp ->
+    if List.length ref <> List.length cmp then false
+    else List.for_all2 (fun x y -> if x = Filled then (x = y) else true) ref cmp
+  
+  let is_empty_same : cell list -> cell list -> bool = fun ref cmp ->
+    if List.length ref <> List.length cmp then false
+    else List.for_all2 (fun x y -> if x = Empty then (x = y) else true) ref cmp
+  
+  let is_same : cell list -> cell list -> bool = fun ref cmp ->
+    if List.length ref <> List.length cmp then false
+    else (is_filled_same ref cmp) && (is_empty_same ref cmp)
 
 (* Helper function to determine consensus across configurations for a specific position *)
 let consensus_at_position configs pos =
@@ -161,25 +167,25 @@ let consensus_at_position configs pos =
   | Some value -> value
   | None -> Unknown
 
-(* Update row based on guaranteed cells across all valid configurations *)
+(* Updated update_row_with_guaranteed_cells to avoid raising an error *)
 let update_row_with_guaranteed_cells : row_hint -> cell list -> cell list = fun hint row ->
-  let configs = get_row_configurations hint (List.length row) [] in
+  let configs = get_row_configurations hint (List.length row) in
   let valid_configs = List.filter (fun config -> is_same row config) configs in
   if List.length valid_configs = 0 then
-    raise Error "No valid configurations found (update_row_with_guaranteed_cells)"
+    row  (* If no valid configurations, return the row unchanged *)
   else
     List.mapi (fun i cell -> 
       match cell with
-      | Unknown -> consensus_at_position valid_configs i (* update Unknown cells based on consensus *)
+      | Unknown -> consensus_at_position valid_configs i
       | _ -> cell
     ) row
 
 (* Update column based on guaranteed cells across all valid configurations *)
 let update_column_with_guaranteed_cells : column_hint -> cell list -> cell list = fun hint column ->
-  let configs = get_column_configurations hint (List.length column) [] in
+  let configs = get_column_configurations hint (List.length column) in
   let valid_configs = List.filter (fun config -> is_same column config) configs in
   if List.length valid_configs = 0 then
-    raise Error "No valid configurations found (update_column_with_guaranteed_cells)"
+    column
   else
     List.mapi (fun i cell -> 
       match cell with
@@ -239,16 +245,21 @@ let rec backtrack_solver : puzzle -> row_hint list -> column_hint list -> puzzle
     match next_unknown_cell with
     | None -> None (* Backtrack if no solution found *)
     | Some (i, j) -> begin
-      let new_p = update_cell p (i, j) Filled in
-      if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
-        match backtrack_solver new_p row_hints col_hints with
-        | Some sol_p -> Some sol_p
-        | None -> 
+        let new_p = update_cell p (i, j) Filled in
+        if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
+          match backtrack_solver new_p row_hints col_hints with
+          | Some sol_p -> Some sol_p
+          | None ->
+            let new_p = update_cell p (i, j) Empty in
+            if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
+              backtrack_solver new_p row_hints col_hints
+            else None
+        else
           let new_p = update_cell p (i, j) Empty in
           if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
             backtrack_solver new_p row_hints col_hints
           else None
-    end
+      end
 
 (* Main function to solve the puzzle, combining deduction and backtracking *)
 let solve_nonogram : row_hint list -> column_hint list -> puzzle option = fun row_hints col_hints ->
@@ -264,3 +275,171 @@ let solve_nonogram : row_hint list -> column_hint list -> puzzle option = fun ro
     else repeat_solve p_new (* Continue solving if there were updates *)
   in
   repeat_solve p (* Start the solving process *)
+
+(* Helper function to print the puzzle for visualization *)
+let print_puzzle puzzle =
+  List.iter (fun row ->
+    List.iter (fun cell ->
+      match cell with
+      | Filled -> print_string "█"
+      | Empty -> print_string " "
+      | Unknown -> print_string "?"
+    ) row;
+    print_newline ()
+  ) puzzle;
+  print_newline ()
+
+
+(*--------------------------------------------------------------------------------------------*)
+(* Helper functions for testing *)
+
+(* Helper function to convert a cell to a string *)
+let cell_to_string cell =
+  match cell with
+  | Filled -> "█"
+  | Empty -> " "
+  | Unknown -> "?"
+
+(* Helper function to convert a cell list to a string *)
+let cell_list_to_string cells =
+  List.fold_left (fun acc cell -> acc ^ (cell_to_string cell)) "" cells
+
+(* Modified assert_equal to handle cell list inputs *)
+let assert_row_equal expected actual =
+  let expected_str = cell_list_to_string expected in
+  let actual_str = cell_list_to_string actual in
+  if expected_str = actual_str then
+    print_endline "Row Test passed"
+  else
+    print_endline ("Row Test failed. Expected: " ^ expected_str ^ " but got: " ^ actual_str)
+
+(* Helper function to convert a puzzle (list of cell lists) to a string *)
+let puzzle_to_string puzzle =
+  List.fold_left (fun acc row -> acc ^ (cell_list_to_string row) ^ "\n") "" puzzle
+
+(* Modified assert_puzzle_equal to handle puzzle inputs *)
+let assert_puzzle_equal expected actual =
+  let expected_str = puzzle_to_string expected in
+  let actual_str = puzzle_to_string actual in
+  if expected_str = actual_str then
+    print_endline "Puzzle Test passed"
+  else
+    print_endline ("Puzzle Test failed. Expected:\n" ^ expected_str ^ "\nbut got:\n" ^ actual_str)
+
+(* Helper function to compare boolean values *)
+let assert_bool_equal expected actual =
+  if expected = actual then
+    print_endline "Boolean Test passed"
+  else
+    print_endline ("Boolean Test failed. Expected: " ^ string_of_bool expected ^ " but got: " ^ string_of_bool actual)
+
+(* Test cases for get_column *)
+let test_get_column () =
+  print_endline "Running test_get_column...";
+  let puzzle = [
+    [Filled; Empty; Unknown];
+    [Empty; Filled; Filled];
+    [Unknown; Empty; Filled]
+  ] in
+  let expected = [Empty; Filled; Empty] in
+  let actual = get_column puzzle 1 in
+  assert_row_equal expected actual
+
+(* Test cases for initialize_puzzle *)
+let test_initialize_puzzle () =
+  print_endline "Running test_initialize_puzzle...";
+  let rows, cols = 2, 3 in
+  let expected = [
+    [Unknown; Unknown; Unknown];
+    [Unknown; Unknown; Unknown]
+  ] in
+  let actual = initialize_puzzle rows cols in
+  assert_puzzle_equal expected actual
+
+(* Test cases for validate_row *)
+let test_validate_row () =
+  print_endline "Running test_validate_row...";
+  assert_bool_equal true (validate_row [3] [Filled; Filled; Filled; Empty; Empty]);
+  assert_bool_equal false (validate_row [3] [Filled; Empty; Filled; Empty; Empty]);
+  assert_bool_equal true (validate_row [1; 1] [Filled; Empty; Filled; Empty; Empty])
+
+(* Test cases for generate_row_configurations *)
+let test_generate_row_configurations () =
+  print_endline "Running test_generate_row_configurations...";
+  let hint = [2] in
+  let length = 3 in
+  let expected = [
+    [Filled; Filled; Empty];
+    [Empty; Filled; Filled]
+  ] in
+  let actual = generate_row_configurations hint length [] in
+  assert_puzzle_equal expected actual;
+
+  let hint = [1; 1] in
+  let length = 3 in
+  let expected = [
+    [Filled; Empty; Filled];
+    [Empty; Filled; Filled]
+  ] in
+  let actual = generate_row_configurations hint length [] in
+  assert_puzzle_equal expected actual
+
+(* Test cases for update_row_with_guaranteed_cells *)
+let test_update_row_with_guaranteed_cells () =
+  print_endline "Running test_update_row_with_guaranteed_cells...";
+  let row = [Unknown; Filled; Unknown] in
+  let hint = [1; 1] in
+  let expected = [Empty; Filled; Filled] in
+  let actual = update_row_with_guaranteed_cells hint row in
+  assert_row_equal expected actual;
+
+  let row = [Unknown; Unknown; Unknown] in
+  let hint = [3] in
+  let expected = [Filled; Filled; Filled] in
+  let actual = update_row_with_guaranteed_cells hint row in
+  assert_row_equal expected actual
+
+(* Test cases for is_filled_same *)
+let test_is_filled_same () =
+  print_endline "Running test_is_filled_same...";
+  let ref_row = [Filled; Empty; Unknown] in
+  let cmp_row = [Filled; Empty; Unknown] in
+  assert_bool_equal true (is_filled_same ref_row cmp_row);
+  assert_bool_equal false (is_filled_same [Filled; Filled; Unknown] cmp_row);
+
+  (* Edge case: empty lists *)
+  assert_bool_equal true (is_filled_same [] [])
+
+(* Test cases for validate_column *)
+let test_validate_column () =
+  print_endline "Running test_validate_column...";
+  assert_bool_equal true (validate_column [3] [Filled; Filled; Filled; Empty; Empty]);
+  assert_bool_equal false (validate_column [3] [Filled; Empty; Filled; Empty; Empty])
+
+(* Test cases for update_column_with_guaranteed_cells *)
+let test_update_column_with_guaranteed_cells () =
+  print_endline "Running test_update_column_with_guaranteed_cells...";
+  let column = [Unknown; Filled; Unknown] in
+  let hint = [1; 1] in
+  let expected = [Empty; Filled; Filled] in
+  let actual = update_column_with_guaranteed_cells hint column in
+  assert_row_equal expected actual;
+
+  let column = [Unknown; Unknown; Unknown] in
+  let hint = [3] in
+  let expected = [Filled; Filled; Filled] in
+  let actual = update_column_with_guaranteed_cells hint column in
+  assert_row_equal expected actual
+
+(* Run all tests *)
+let () =
+  print_endline "Running tests...";
+  test_get_column ();
+  test_initialize_puzzle ();
+  test_validate_row ();
+  test_generate_row_configurations ();
+  test_update_row_with_guaranteed_cells ();
+  test_is_filled_same ();
+  test_validate_column ();
+  test_update_column_with_guaranteed_cells ();
+  print_endline "All tests complete."

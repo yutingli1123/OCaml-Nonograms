@@ -23,4 +23,8 @@
  (tags
   (topics "to describe" your project)))
 
+(library
+ (name nonogram)
+ (modules main))
+
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
