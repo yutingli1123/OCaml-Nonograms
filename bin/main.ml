@@ -149,13 +149,36 @@ let update_column_with_guaranteed_cells : column_hint -> cell list -> cell list 
 
 (* Function to apply row and column updates to the puzzle grid *)
 let update_puzzle : puzzle -> row_hint list -> column_hint list -> puzzle = fun puzzle row_hints col_hints ->
-  (* Implement the update logic *)
-  puzzle
+  (* get both rows and columns updates from other functions, by iterating through each one*)
+  let updated_rows = List.mapi (fun i row -> update_row_with_guaranteed_cells (List.nth row_hints i) row) puzzle in
+  (* to get updated columns, we first use get_column for all columns, the do the same as with rows*)
+  let all_columns = List.init (List.length col_hints) (fun i -> get_column puzzle i) in
+  let updated_columns = List.mapi (fun i column -> update_column_with_guaranteed_cells (List.nth col_hints i) column) all_columns in
+  (* we compare the updated_columns and updated_rows, to only keep what they share, otherwise cells not similar are kept Unknown*)
+  List.mapi (fun i row -> 
+    List.mapi (fun j cell -> 
+      let row_value = List.nth (List.nth updated_rows i) j in
+      let col_value = List.nth (List.nth updated_columns j) i in
+      match row_value, col_value with
+      | r, c when r = c -> r (* if both same*)
+      | v, Unknown | Unknown, v -> v (* if one is Unknown, keep the other*)
+      | _ -> Unknown (* if both different*)
+    ) row
+  ) puzzle
+
+
 
 (* Function to check if the puzzle is solved *)
 let is_solved : puzzle -> bool = fun puzzle ->
-  (* Implement the check logic *)
-  false
+  (* check if any rows contain Unknown, if so then false, but if not then true*)
+  List.for_all (fun row -> List.for_all (fun cell -> cell <> Unknown) row) puzzle
+
+let is_puzzle_same : puzzle -> puzzle -> bool = fun p1 p2 ->
+  List.for_all2 (fun row1 row2 -> (* iterate over all rows, comparing between puzzles*)
+    List.for_all2 (fun cell1 cell2 ->  (* iterate over all cells of rows*)
+      cell1 = cell2 (* returns true for each cell, so true for whole puzzle if all cells match*)
+    ) row1 row2
+  ) p1 p2
 
 (* Recursive function to solve the puzzle using backtracking or logical deduction *)
 let solve_nonogram : row_hint list -> column_hint list -> puzzle option = fun row_hints col_hints ->
@@ -163,5 +186,3 @@ let solve_nonogram : row_hint list -> column_hint list -> puzzle option = fun ro
   let col_size = List.length col_hints in
   let p = initialize_puzzle row_size col_size in(*init puzzle to Unknown*)
 
-
-  None
