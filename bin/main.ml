@@ -180,9 +180,58 @@ let is_puzzle_same : puzzle -> puzzle -> bool = fun p1 p2 ->
     ) row1 row2
   ) p1 p2
 
+
+let get_next_unknown_cell : puzzle -> (int * int) option = fun puzzle ->
+  let rec get_next_unknown_cell' : puzzle -> int -> int -> (int * int) option = fun puzzle i j ->
+    if i = List.length puzzle then None
+    else if j = List.length (List.nth puzzle i) then get_next_unknown_cell' puzzle (i + 1) 0
+    else if List.nth (List.nth puzzle i) j = Unknown then Some (i, j)
+    else get_next_unknown_cell' puzzle i (j + 1)
+  in
+  get_next_unknown_cell' puzzle 0 0
+
+let update_cell : puzzle -> (int * int) -> cell -> puzzle = fun p (i, j) value ->
+  List.mapi (fun row_idx row ->
+    if row_idx = i then
+      List.mapi (fun col_idx cell ->
+        if col_idx = j then value else cell
+      ) row
+    else row
+  ) p
+
+
+let rec backtrack_solver : puzzle -> row_hint list -> column_hint list -> puzzle option = fun p row_hints col_hints ->
+  if is_solved p then Some p
+  else
+    let next_unknown_cell = get_next_unknown_cell p in
+    match next_unknown_cell with
+    | None -> None (* this will backtrack back using the previous version of the puzzle, as this led to no solution*)
+    | Some (i, j) -> begin
+      let new_p = update_cell p (i, j) Filled in
+      if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
+        match backtrack_solver new_p row_hints col_hints with
+        | Some sol_p -> Some sol_p
+        | None -> begin
+          let new_p = update_cell p (i, j) Empty in
+          if validate_row (List.nth row_hints i) (List.nth new_p i) && validate_column (List.nth col_hints j) (get_column new_p j) then
+            backtrack_solver new_p row_hints col_hints
+          else None
+        end
+      else None
+    end
+      
+
 (* Recursive function to solve the puzzle using backtracking or logical deduction *)
 let solve_nonogram : row_hint list -> column_hint list -> puzzle option = fun row_hints col_hints ->
   let row_size = List.length row_hints in
   let col_size = List.length col_hints in
-  let p = initialize_puzzle row_size col_size in(*init puzzle to Unknown*)
-
+  let p = initialize_puzzle row_size col_size in (*init puzzle to Unknown*)
+  let repeat_solve : puzzle -> puzzle option = fun p -> (* helper recursive function, runs until backtracking is needed*)
+    let prev_p = p in (* make copy of puzzle to compare after update*)
+    let p_new = update_puzzle p row_hints col_hints in
+    if is_solved p_new then Some p_new (* if puzzle is solved, then return it*)
+    else if is_puzzle_same prev_p p_new then 
+      backtrack_solver p_new row_hints col_hints (* if puzzle had no updates, go to backtracking*)
+    else repeat_solve p_new (* if puzzle had updates but isn't solved, redo repeat_solve*)
+  in
+  repeat_solve p (* start the recursive function*)
