@@ -16,24 +16,61 @@ let update_column : puzzle -> int -> cell list -> puzzle = fun puzzle col_index 
         ) row
     ) puzzle
 
+let get_first_elem_of_list : 'a list -> 'a = fun lst ->
+  match lst with
+  | [] -> raise Error "Empty list has no first element"
+  | x :: _ -> x
+
+let get_rest_of_list : 'a list -> 'a list = fun lst ->
+  match lst with
+  | [] -> []
+  | x :: xs -> xs
+
 let rec get_list_sum : int list -> int = fun lst ->
   match lst with
   | [] -> 0
   | x :: xs -> x + (get_list_sum xs);;
+
+let rec remove_from_list : int list -> int -> int list = fun lst amt ->
+  match lst with
+  | [] -> []
+  | x :: xs -> if amt > 0 then remove_from_list xs (amt - 1) else xs
 
 (* Function to initialize the puzzle grid with Unknown cells *)
 let initialize_puzzle : int -> int -> puzzle = fun rows cols ->
   List.init rows (fun _ -> List.init cols (fun _ -> Unknown))
 
 (* Function to validate whether a row configuration satisfies its hint *)
-let validate_row : row_hint -> cell list -> bool = fun hint row ->
-  (* Implement the validation logic *)
-  false
+let rec validate_row : row_hint -> cell list -> bool = fun hint row ->
+  let hint_size = List.length hint in
+  match row with
+  | [] -> if hint_size > 0 then false else true
+  | x :: xs -> begin
+    if hint_size = 0 then
+      if x = Filled then false else validate_row hint xs
+    else
+      let this_hint = get_first_elem_of_list hint in
+      if x = Filled then 
+        validate_row (get_rest_of_list hint) (remove_from_list row this_hint)
+      else
+        validate_row hint xs
+  end
 
 (* Function to validate whether a column configuration satisfies its hint *)
-let validate_column : column_hint -> cell list -> bool = fun hint column ->
-  (* Implement the validation logic *)
-  false
+let rec validate_column : column_hint -> cell list -> bool = fun hint column ->
+  let hint_size = List.length hint in
+  match column with
+  | [] -> if hint_size > 0 then false else true
+  | x :: xs -> begin
+    if hint_size = 0 then
+      if x = Filled then false else validate_column hint xs
+    else
+      let this_hint = get_first_elem_of_list hint in
+      if x = Filled then 
+        validate_column (get_rest_of_list hint) (remove_from_list column this_hint)
+      else
+        validate_column hint xs
+  end
 
 (* Function to generate possible configurations for a row based on its hint *)
 let rec generate_row_configurations : row_hint -> int -> int list -> cell list list = fun hint length acc->
@@ -51,7 +88,7 @@ let rec generate_row_configurations : row_hint -> int -> int list -> cell list l
       ]
 
 (* Function to generate possible configurations for a column based on its hint *)
-let generate_column_configurations : column_hint -> int -> int list -> cell list list = fun hint length acc->
+let rec generate_column_configurations : column_hint -> int -> int list -> cell list list = fun hint length acc->
   let total_filled = get_list_sum hint in (* get total amount filled for max beginning empty slots*)
   if total_filled > length then
     raise Error "Invalid hint given (generate_column_configurations)" (* more hints than available column indices*)
