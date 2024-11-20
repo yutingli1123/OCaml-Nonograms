@@ -128,6 +128,26 @@ let test_cases : test_case list = [
       [Empty; Filled; Empty; Filled; Empty; Empty]
     ];
   };
+
+  {
+    name = "2x5 Example 1";
+    row_hints = [[2]; [1;3]];
+    col_hints = [[2]; [1]; [1]; [1]; [1]];
+    expected_solution = [
+      [Filled; Filled; Empty; Empty; Empty];
+      [Filled; Empty; Filled; Filled; Filled];
+    ];
+  };
+
+  {
+    name = "2x5 Example 2";
+    row_hints = [[3]; [1;3]];
+    col_hints = [[2]; [1]; [2]; [1]; [1]];
+    expected_solution = [
+      [Filled; Filled; Filled; Empty; Empty];
+      [Filled; Empty; Filled; Filled; Filled];
+    ];
+  };
 ]
 
 (* run all tests *)
