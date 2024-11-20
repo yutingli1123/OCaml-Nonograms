@@ -46,7 +46,7 @@ let test_initialize_puzzle _ =
 (* test validate_line *)
 let test_validate_line _ =
   assert_equal true (validate_line [3] [Filled; Filled; Filled; Empty; Empty]);
-  assert_equal true (validate_line [3] [Filled; Empty; Filled; Empty; Empty]);
+  assert_equal false (validate_line [3] [Filled; Empty; Filled; Empty; Empty]);
   assert_equal true (validate_line [1; 1] [Filled; Empty; Filled; Empty; Empty])
 
 (* more validate_line tests *)
