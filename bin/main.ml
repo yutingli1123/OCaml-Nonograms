@@ -154,8 +154,35 @@ let test_cases : test_case list = [
     row_hints = [[3]; [5]; [5]; [5; 1]; [5; 3]; [5; 3]; [5; 3]; [1; 5; 3]; [3; 9]; [3; 9]; [3; 8]; [3; 5]; [3; 5]; [3; 5]; [9]; [9]; [8]; [5]; [5]; [5]; [5]; [15]; [2; 2]; [15]; [13]; [11]; [11]; [9]; [9]; [7]];
     col_hints = [[3]; [8; 4]; [10; 1; 4]; [9; 1; 6]; [3; 1; 7]; [21; 7]; [22; 7]; [22; 7]; [22; 7]; [21; 7]; [3; 1; 7]; [7; 1; 6]; [8; 1; 4]; [6; 4]; [3]];
     expected_solution = [
-      [Filled; Filled; Filled; Empty; Empty];
-      [Filled; Empty; Filled; Filled; Filled];
+      [Empty; Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Filled; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Empty];
+      [Empty; Empty; Filled; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled];
+      [Filled; Filled; Empty; Empty; Empty; Empty; Empty; Empty; Empty; Empty; Empty; Empty; Empty; Filled; Filled];
+      [Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled];
+      [Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty];
+      [Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty];
+      [Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty];
+      [Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty];
+      [Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty];
     ];
   };
 ]
