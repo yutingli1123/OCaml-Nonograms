@@ -160,6 +160,7 @@ let run_tests () =
     | Some solution ->
         if puzzles_equal solution test.expected_solution then
           print_endline "Test Passed.\n"
+          print_puzzle solution;
         else begin
           print_endline "Test Failed.";
           print_endline "Expected Solution:";
