@@ -169,6 +169,7 @@ let test_cases : test_case list = [
       [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
       [Empty; Filled; Filled; Filled; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
       [Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
+      [Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
       [Empty; Empty; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
       [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
       [Empty; Empty; Empty; Empty; Empty; Filled; Filled; Filled; Filled; Filled; Empty; Empty; Empty; Empty; Empty];
