@@ -158,9 +158,10 @@ let run_tests () =
     | None ->
         print_endline "Solver failed to find a solution.\n";
     | Some solution ->
-        if puzzles_equal solution test.expected_solution then
-          print_endline "Test Passed.\n"
-          print_puzzle solution;
+        if puzzles_equal solution test.expected_solution then begin
+          print_endline "Test Passed.\n";
+          print_puzzle solution
+        end
         else begin
           print_endline "Test Failed.";
           print_endline "Expected Solution:";
