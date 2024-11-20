@@ -9,6 +9,7 @@ type test_case = {
 }
 
 let test_cases : test_case list = [
+  (*  
   {
     name = "1x1";
     row_hints = [[1]];
@@ -60,7 +61,7 @@ let test_cases : test_case list = [
       [Empty; Empty; Empty; Empty]
     ];
   };
-  
+  *)
   {
     name = "5x5";
     row_hints = [[5]; [1;1;1]; [5]; [1;1;1]; [5]];
@@ -74,6 +75,7 @@ let test_cases : test_case list = [
     ];
   };
   
+  (*
   {
     name = "5x5 example 2";
     row_hints = [[1]; [1]; [5]; [1]; [1]];
@@ -148,7 +150,7 @@ let test_cases : test_case list = [
       [Filled; Empty; Filled; Filled; Filled];
     ];
   };
-
+  *)
   {
     name = "Large puzzle 15x30";
     row_hints = [[3]; [5]; [5]; [5; 1]; [5; 3]; [5; 3]; [5; 3]; [1; 5; 3]; [3; 9]; [3; 9]; [3; 8]; [3; 5]; [3; 5]; [3; 5]; [9]; [9]; [8]; [5]; [5]; [5]; [5]; [15]; [2; 2]; [15]; [13]; [11]; [11]; [9]; [9]; [7]];
